@@ -35,7 +35,7 @@ In a second terminal:
 npm run dev
 ```
 
-Vite serves the interface at `http://localhost:5173` and proxies optional `/api` requests to the local server on port 4179. Static analysis works in the browser through the published package. The profile control is shown in development only when the API is running, and only for the curated SQLite samples.
+Vite serves the interface at `http://localhost:5173` and proxies optional `/api` requests to the local server on port 4179. Static analysis works in the browser through the published package. During development, the profile control is available only for curated SQLite samples and requires the API server to be running. A static production deployment shows it only when `VITE_API_URL` is configured at build time.
 
 ## Production build
 
