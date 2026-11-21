@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: querylens-playground-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm run server:start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: ./server/data/querylens-demo.sqlite
+      - key: FRONTEND_ORIGINS
+        sync: false

@@ -1,0 +1,68 @@
+{
+  "name": "querylens-playground",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:server": "node --import tsx --watch server/src/index.ts",
+    "build": "vite build",
+    "server:start": "node --import tsx server/src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test:server": "vitest run server/test",
+    "test": "vitest run",
+    "lint": "eslint src server/src server/test vite.config.ts vitest.config.ts eslint.config.js",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@codemirror/lang-sql": "^6.10.0",
+    "@codemirror/view": "^6.39.2",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "@fontsource/ibm-plex-sans": "^5.3.0",
+    "@shanmukha_npm/querylens": "0.1.1",
+    "@uiw/react-codemirror": "^4.25.4",
+    "better-sqlite3": "^12.11.1",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.2.1",
+    "helmet": "^8.1.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@types/supertest": "^6.0.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/coverage-v8": "^4.1.12",
+    "eslint": "^10.15.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.73.0",
+    "vite": "^7.2.2",
+    "vitest": "^4.1.12"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true,
+    "esbuild@0.28.2": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cshanmukha777/querylens-playground.git"
+  },
+  "homepage": "https://github.com/cshanmukha777/querylens-playground#readme",
+  "license": "MIT"
+}
