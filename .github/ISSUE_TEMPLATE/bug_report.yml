@@ -1,0 +1,32 @@
+name: Bug report
+description: Report a reproducible problem in the Playground.
+title: "bug: "
+labels: [bug]
+body:
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include the exact error or unexpected result.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the selected dialect and a minimal SQL example.
+    validations:
+      required: true
+  - type: input
+    id: runtime
+    attributes:
+      label: Browser and version
+    validations:
+      required: true
