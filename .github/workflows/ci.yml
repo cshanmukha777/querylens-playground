@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+permissions:
+  contents: read
+
 jobs:
   verify:
     name: Verify on Node ${{ matrix.node-version }}
@@ -27,5 +30,5 @@ jobs:
       - run: npm audit --audit-level=low
       - run: npm run typecheck
       - run: npm run lint
-      - run: npm test
+      - run: npm run test:coverage
       - run: npm run build
