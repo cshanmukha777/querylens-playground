@@ -6,7 +6,7 @@ An interactive developer workspace for inspecting SQL with the published [`@shan
 
 - Core library: [cshanmukha777/querylens](https://github.com/cshanmukha777/querylens)
 - npm package: [@shanmukha_npm/querylens](https://www.npmjs.com/package/@shanmukha_npm/querylens)
-- Live demo: deployment is not yet configured.
+- Live demo: [QueryLens Playground on GitHub Pages](https://cshanmukha777.github.io/querylens-playground/).
 
 ## Features
 
@@ -75,7 +75,7 @@ The tests cover the published package across the sample dialects, malformed and 
 
 ## Deployment
 
-`netlify.toml` configures the static Vite build. `render.yaml` configures the optional Node API. Configure the hosting account and deployment URLs before using either service; no public demo URL is claimed until the deployment has been verified.
+GitHub Pages builds and deploys the static frontend from `main` using [the Pages workflow](.github/workflows/deploy-pages.yml). The live demo supports browser-side analysis, samples, history, and report downloads. It does not host the SQLite API, so profiling is disabled there. `render.yaml` describes the optional Node API; after deploying it, set `VITE_API_URL` for the frontend build and allow the Pages origin in `FRONTEND_ORIGINS`. `netlify.toml` remains available for an alternate static frontend deployment.
 
 ## License
 
