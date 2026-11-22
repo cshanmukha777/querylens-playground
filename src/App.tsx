@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import CodeMirror from "@uiw/react-codemirror";
 import { sql } from "@codemirror/lang-sql";
 import { keymap } from "@codemirror/view";
@@ -44,33 +44,57 @@ export default function App() {
   const [loading, setLoading] = useState<"analysis" | "profile" | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const requestRevision = useRef(0);
 
   const selectedSample = useMemo(() => playgroundSamples.find((sample) => sample.id === sampleId), [sampleId]);
 
+  function clearResults() {
+    requestRevision.current += 1;
+    setAnalysis(null);
+    setHtmlReport("");
+    setProfile(null);
+    setError("");
+    setLoading(null);
+  }
+
+  function restoreHistoryItem(item: HistoryItem) {
+    setSqlText(item.sql);
+    setDialect(item.dialect);
+    setSampleId("");
+    clearResults();
+    setView("workspace");
+  }
+
   async function analyze() {
+    const revision = ++requestRevision.current;
+    const query = sqlText;
+    const selectedDialect = dialect;
     setError(""); setProfile(null); setAnalysis(null); setHtmlReport("");
-    if (!sqlText.trim()) { setError("Enter a SQL query to analyze."); return; }
-    if (sqlText.length > 8000) { setError("Queries must be 8,000 characters or fewer."); return; }
+    if (!query.trim()) { setError("Enter a SQL query to analyze."); return; }
+    if (query.length > 8000) { setError("Queries must be 8,000 characters or fewer."); return; }
     setLoading("analysis");
     try {
       const { QueryLens } = await import("@shanmukha_npm/querylens");
-      const lens = new QueryLens({ dialect });
-      const result = lens.analyze(sqlText);
+      if (revision !== requestRevision.current) return;
+      const lens = new QueryLens({ dialect: selectedDialect });
+      const result = lens.analyze(query);
       setAnalysis(result); setHtmlReport(lens.html(result));
-      const next = [{ id: result.fingerprint, sql: sqlText, dialect, score: result.score, grade: result.grade, findings: result.findings.length, at: new Date().toISOString() }, ...readHistory()].slice(0, 20);
+      const next = [{ id: result.fingerprint, sql: query, dialect: selectedDialect, score: result.score, grade: result.grade, findings: result.findings.length, at: new Date().toISOString() }, ...readHistory()].slice(0, 20);
       setHistory(next);
       try { localStorage.setItem("querylens-history", JSON.stringify(next)); }
       catch { setError("Analysis succeeded, but this browser could not save query history."); }
-    } catch (reason) { setError(reason instanceof Error ? reason.message : "Analysis failed."); }
-    finally { setLoading(null); }
+    } catch (reason) { if (revision === requestRevision.current) setError(reason instanceof Error ? reason.message : "Analysis failed."); }
+    finally { if (revision === requestRevision.current) setLoading(null); }
   }
 
   async function profileSample() {
     if (!selectedSample?.profileSampleId || dialect !== "sqlite") { setError("Profiling is available only for curated SQLite samples."); return; }
+    const revision = ++requestRevision.current;
+    const profileSampleId = selectedSample.profileSampleId;
     setLoading("profile"); setError(""); setProfile(null);
-    try { const data = await request<{ record: Profile }>("/api/profile", { method: "POST", body: JSON.stringify({ sampleId: selectedSample.profileSampleId }) }); setProfile(data.record); }
-    catch (reason) { setError(reason instanceof Error ? reason.message : "Profiling failed."); }
-    finally { setLoading(null); }
+    try { const data = await request<{ record: Profile }>("/api/profile", { method: "POST", body: JSON.stringify({ sampleId: profileSampleId }) }); if (revision === requestRevision.current) setProfile(data.record); }
+    catch (reason) { if (revision === requestRevision.current) setError(reason instanceof Error ? reason.message : "Profiling failed."); }
+    finally { if (revision === requestRevision.current) setLoading(null); }
   }
 
   async function copyResult() {
@@ -104,9 +128,9 @@ export default function App() {
           <section className="workspace-grid" aria-label="SQL workspace">
             <div className="editor-column">
               <div className="panel editor-panel">
-                <div className="panel-toolbar"><div className="panel-title"><span className="file-icon"><FileCode2 size={15} /></span><span>Untitled query</span><span className="unsaved-dot" aria-label="Unsaved changes" /></div><div className="toolbar-actions"><label className="select-label" htmlFor="dialect">Dialect</label><select id="dialect" value={dialect} onChange={(event) => setDialect(event.target.value as SqlDialect)}><option value="sqlite">SQLite</option><option value="postgresql">PostgreSQL</option><option value="mysql">MySQL</option></select></div></div>
-                <div className="sample-row"><label htmlFor="sample">Start from a sample</label><select id="sample" value={sampleId} onChange={(event) => { const id = event.target.value; setSampleId(id); const sample = playgroundSamples.find((item) => item.id === id); if (sample) { setSqlText(sample.sql); setDialect(sample.dialect); } }}><option value="">Choose query</option>{playgroundSamples.map((sample) => <option value={sample.id} key={sample.id}>{sample.name}</option>)}</select><button className="text-button" onClick={() => { setSampleId(""); setSqlText(""); setAnalysis(null); setProfile(null); setError(""); }}><RotateCcw size={14} /> Clear</button></div>
-                <div className="code-editor" aria-label="SQL editor"><CodeMirror value={sqlText} height="318px" extensions={[sql(), keymap.of([{ key: "Mod-Enter", run: () => { void analyze(); return true; } }])]} onChange={setSqlText} basicSetup={{ lineNumbers: true, foldGutter: true, highlightActiveLine: true, highlightSelectionMatches: true }} aria-label="SQL query input" /></div>
+                <div className="panel-toolbar"><div className="panel-title"><span className="file-icon"><FileCode2 size={15} /></span><span>Untitled query</span><span className="unsaved-dot" aria-label="Unsaved changes" /></div><div className="toolbar-actions"><label className="select-label" htmlFor="dialect">Dialect</label><select id="dialect" value={dialect} onChange={(event) => { setDialect(event.target.value as SqlDialect); setSampleId(""); clearResults(); }}><option value="sqlite">SQLite</option><option value="postgresql">PostgreSQL</option><option value="mysql">MySQL</option></select></div></div>
+                <div className="sample-row"><label htmlFor="sample">Start from a sample</label><select id="sample" value={sampleId} onChange={(event) => { const id = event.target.value; setSampleId(id); const sample = playgroundSamples.find((item) => item.id === id); if (sample) { setSqlText(sample.sql); setDialect(sample.dialect); } clearResults(); }}><option value="">Choose query</option>{playgroundSamples.map((sample) => <option value={sample.id} key={sample.id}>{sample.name}</option>)}</select><button className="text-button" onClick={() => { setSampleId(""); setSqlText(""); clearResults(); }}><RotateCcw size={14} /> Clear</button></div>
+                <div className="code-editor" aria-label="SQL editor"><CodeMirror value={sqlText} height="318px" extensions={[sql(), keymap.of([{ key: "Mod-Enter", run: () => { void analyze(); return true; } }])]} onChange={(value) => { setSqlText(value); clearResults(); }} basicSetup={{ lineNumbers: true, foldGutter: true, highlightActiveLine: true, highlightSelectionMatches: true }} aria-label="SQL query input" /></div>
                 <div className="editor-footer"><span><kbd>⌘</kbd> + <kbd>↵</kbd> to analyze</span><span>{sqlText.length.toLocaleString()} / 8,000 characters</span></div>
                 <div className="editor-actions"><button className="primary-button" onClick={analyze} disabled={loading !== null || !sqlText.trim() || sqlText.length > 8000}><Play size={16} fill="currentColor" />{loading === "analysis" ? "Analyzing…" : "Analyze query"}</button>{profilingAvailable && <button className="secondary-button" onClick={profileSample} disabled={loading !== null || !selectedSample?.profileSampleId || dialect !== "sqlite"}><Gauge size={16} />{loading === "profile" ? "Profiling…" : "Profile sample"}</button>}<span className="profile-note">{profilingAvailable ? selectedSample?.profileSampleId && dialect === "sqlite" ? "Runs a curated SQLite sample, not editor text" : "Profiling uses curated SQLite samples only" : "SQLite profiling is available in local development"}</span></div>
               </div>
@@ -127,7 +151,7 @@ export default function App() {
           </section>
         </>}
 
-        {view === "history" && <HistoryView history={history} onSelect={(item) => { setSqlText(item.sql); setDialect(item.dialect); setView("workspace"); }} />}
+        {view === "history" && <HistoryView history={history} onSelect={restoreHistoryItem} />}
         {view === "guidance" && <GuidanceView analysis={analysis} />}
       </main>
     </div>
